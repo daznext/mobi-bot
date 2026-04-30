@@ -42,7 +42,7 @@ By default, anyone who finds the bot can use it. To restrict access, set `ALLOWE
 ALLOWED_USER_IDS=123456789,987654321
 ```
 
-You can find your id by sending `/whoami` to the bot while `ALLOWED_USER_IDS` is empty. After setting the allowlist, restart the bot.
+You can find your id by sending `/whoami` to the bot. `/help` and `/whoami` are available even when access is restricted. After setting the allowlist, restart the bot.
 
 ## Mail Backend
 

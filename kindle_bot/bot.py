@@ -59,10 +59,7 @@ class KindleBot:
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not self._is_allowed(update):
-            await self._reject(update)
-            return
-        await update.effective_message.reply_text(self._help_text())
+        await update.effective_message.reply_text(self._help_text(update))
 
     async def set_email(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self._is_allowed(update):
@@ -260,8 +257,15 @@ class KindleBot:
             except OSError:
                 logging.warning("Failed to delete expired output file: %s", job.path)
 
-    def _help_text(self) -> str:
-        return f"{HELP_TEXT}\n{self._approved_sender_hint()}"
+    def _help_text(self, update: Update | None = None) -> str:
+        parts = [HELP_TEXT, self._approved_sender_hint()]
+        user = update.effective_user if update else None
+        if user and self.config.allowed_user_ids and user.id not in self.config.allowed_user_ids:
+            parts.append(
+                "Ваш Telegram user id: "
+                f"{user.id}\nПопросите владельца бота добавить его в ALLOWED_USER_IDS."
+            )
+        return "\n".join(parts)
 
     def _approved_sender_hint(self) -> str:
         if self.config.smtp_from:
