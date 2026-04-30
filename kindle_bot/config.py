@@ -11,9 +11,22 @@ def _as_bool(value: str | None, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _as_int_set(value: str | None) -> frozenset[int]:
+    if not value:
+        return frozenset()
+
+    result: set[int] = set()
+    for item in value.split(","):
+        item = item.strip()
+        if item:
+            result.add(int(item))
+    return frozenset(result)
+
+
 @dataclass(frozen=True)
 class Config:
     telegram_bot_token: str
+    allowed_user_ids: frozenset[int]
     ebook_convert_bin: str
     db_path: Path
     output_dir: Path
@@ -39,6 +52,7 @@ class Config:
 
         return cls(
             telegram_bot_token=token,
+            allowed_user_ids=_as_int_set(os.getenv("ALLOWED_USER_IDS")),
             ebook_convert_bin=os.getenv("EBOOK_CONVERT_BIN", "ebook-convert"),
             db_path=Path(os.getenv("BOT_DB_PATH", "./data/bot.sqlite3")),
             output_dir=Path(os.getenv("BOT_OUTPUT_DIR", "./data/output")),

@@ -34,6 +34,16 @@ export EBOOK_CONVERT_BIN=/opt/homebrew/bin/ebook-convert
 The address from `SMTP_FROM` must be added to Amazon's approved sender list:
 Amazon account settings -> Content Library / Devices -> Preferences -> Personal Document Settings -> Approved Personal Document E-mail List.
 
+## Access Control
+
+By default, anyone who finds the bot can use it. To restrict access, set `ALLOWED_USER_IDS` to a comma-separated list of Telegram user ids:
+
+```env
+ALLOWED_USER_IDS=123456789,987654321
+```
+
+You can find your id by sending `/whoami` to the bot while `ALLOWED_USER_IDS` is empty. After setting the allowlist, restart the bot.
+
 ## Mail Backend
 
 ### SMTP
@@ -81,6 +91,7 @@ Add the `SMTP_FROM` Gmail address to Amazon's approved sender list.
 - `/setemail name@kindle.com` - save or replace Kindle email
 - `/email` - show saved Kindle email
 - `/deleteemail` - delete saved Kindle email
+- `/whoami` - show your Telegram user id
 - `/help` - show help
 
 Send a book as a Telegram document. The bot converts it to `mobi` and returns the file. If you have a saved Kindle email, the bot also shows a button to email an `epub` copy to that address.

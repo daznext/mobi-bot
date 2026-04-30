@@ -46,6 +46,7 @@ HELP_TEXT = """Пришлите книгу файлом: fb2, fb2.zip, zip с fb
 /setemail name@kindle.com - сохранить или заменить Kindle email
 /email - показать сохраненный Kindle email
 /deleteemail - удалить сохраненный Kindle email
+/whoami - показать ваш Telegram user id
 /help - помощь
 """
 
@@ -58,9 +59,16 @@ class KindleBot:
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._is_allowed(update):
+            await self._reject(update)
+            return
         await update.effective_message.reply_text(self._help_text())
 
     async def set_email(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._is_allowed(update):
+            await self._reject(update)
+            return
+
         message = update.effective_message
         user = update.effective_user
         if not message or not user:
@@ -81,6 +89,10 @@ class KindleBot:
         )
 
     async def show_email(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._is_allowed(update):
+            await self._reject(update)
+            return
+
         message = update.effective_message
         user = update.effective_user
         if not message or not user:
@@ -93,6 +105,10 @@ class KindleBot:
             await message.reply_text("Kindle email пока не задан. Используйте /setemail name@kindle.com")
 
     async def delete_email(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._is_allowed(update):
+            await self._reject(update)
+            return
+
         message = update.effective_message
         user = update.effective_user
         if not message or not user:
@@ -101,7 +117,19 @@ class KindleBot:
         self.storage.delete_kindle_email(user.id)
         await message.reply_text("Удалил сохраненный Kindle email.")
 
+    async def whoami(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        message = update.effective_message
+        user = update.effective_user
+        if not message or not user:
+            return
+
+        await message.reply_text(f"Ваш Telegram user id: {user.id}")
+
     async def handle_document(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._is_allowed(update):
+            await self._reject(update)
+            return
+
         message = update.effective_message
         user = update.effective_user
         document = message.document if message else None
@@ -185,6 +213,10 @@ class KindleBot:
             return output_path, kindle_path
 
     async def send_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._is_allowed(update):
+            await self._reject(update)
+            return
+
         query = update.callback_query
         user = update.effective_user
         if not query or not user or not query.data:
@@ -242,6 +274,24 @@ class KindleBot:
             "в список разрешенных отправителей Amazon."
         )
 
+    def _is_allowed(self, update: Update) -> bool:
+        user = update.effective_user
+        if not user:
+            return False
+        return not self.config.allowed_user_ids or user.id in self.config.allowed_user_ids
+
+    async def _reject(self, update: Update) -> None:
+        user = update.effective_user
+        if user:
+            logging.warning("Rejected update from unauthorized user_id=%s", user.id)
+
+        if update.callback_query:
+            await update.callback_query.answer("Доступ запрещен.", show_alert=True)
+            return
+
+        if update.effective_message:
+            await update.effective_message.reply_text("Доступ запрещен.")
+
 
 def build_application(config: Config) -> Application:
     bot = KindleBot(config)
@@ -251,6 +301,7 @@ def build_application(config: Config) -> Application:
     app.add_handler(CommandHandler("setemail", bot.set_email))
     app.add_handler(CommandHandler("email", bot.show_email))
     app.add_handler(CommandHandler("deleteemail", bot.delete_email))
+    app.add_handler(CommandHandler("whoami", bot.whoami))
     app.add_handler(CallbackQueryHandler(bot.send_callback))
     app.add_handler(MessageHandler(filters.Document.ALL, bot.handle_document))
     return app
