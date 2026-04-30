@@ -32,6 +32,11 @@ def main() -> None:
         type=int,
         help="Port for the temporary local OAuth callback server.",
     )
+    parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Print the authorization URL instead of trying to open a browser.",
+    )
     args = parser.parse_args()
 
     credentials_path = Path(args.credentials)
@@ -39,7 +44,11 @@ def main() -> None:
     token_path.parent.mkdir(parents=True, exist_ok=True)
 
     flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
-    creds = flow.run_local_server(host=args.host, port=args.port)
+    creds = flow.run_local_server(
+        host=args.host,
+        port=args.port,
+        open_browser=not args.no_browser,
+    )
     token_path.write_text(creds.to_json(), encoding="utf-8")
     print(f"Wrote Gmail token to {token_path}")
 
