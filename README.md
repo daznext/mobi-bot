@@ -31,6 +31,9 @@ If `ebook-convert` is not in `PATH`, set `EBOOK_CONVERT_BIN`, for example:
 export EBOOK_CONVERT_BIN=/opt/homebrew/bin/ebook-convert
 ```
 
+The address from `SMTP_FROM` must be added to Amazon's approved sender list:
+Amazon account settings -> Content Library / Devices -> Preferences -> Personal Document Settings -> Approved Personal Document E-mail List.
+
 ## Bot Commands
 
 - `/start` - show help
@@ -39,5 +42,4 @@ export EBOOK_CONVERT_BIN=/opt/homebrew/bin/ebook-convert
 - `/deleteemail` - delete saved Kindle email
 - `/help` - show help
 
-Send a book as a Telegram document. The bot converts it to `mobi` and returns the file. If you have a saved Kindle email, the bot also shows a button to email the converted book to that address.
-
+Send a book as a Telegram document. The bot converts it to `mobi` and returns the file. If you have a saved Kindle email, the bot also shows a button to email an `epub` copy to that address.

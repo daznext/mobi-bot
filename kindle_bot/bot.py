@@ -40,7 +40,7 @@ class ConvertedJob:
     created_at: float
 
 
-HELP_TEXT = """Пришлите книгу файлом: fb2, fb2.zip или epub. Я сконвертирую ее в mobi и отправлю обратно.
+HELP_TEXT = """Пришлите книгу файлом: fb2, fb2.zip, zip с fb2 внутри или epub. Я сконвертирую ее в mobi и отправлю обратно.
 
 Команды:
 /setemail name@kindle.com - сохранить или заменить Kindle email
@@ -58,7 +58,7 @@ class KindleBot:
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.effective_message.reply_text(HELP_TEXT)
+        await update.effective_message.reply_text(self._help_text())
 
     async def set_email(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         message = update.effective_message
@@ -76,7 +76,9 @@ class KindleBot:
             return
 
         self.storage.set_kindle_email(user.id, email)
-        await message.reply_text(f"Сохранил Kindle email: {email}")
+        await message.reply_text(
+            f"Сохранил Kindle email: {email}\n\n{self._approved_sender_hint()}"
+        )
 
     async def show_email(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         message = update.effective_message
@@ -225,6 +227,20 @@ class KindleBot:
                 job.kindle_path.unlink(missing_ok=True)
             except OSError:
                 logging.warning("Failed to delete expired output file: %s", job.path)
+
+    def _help_text(self) -> str:
+        return f"{HELP_TEXT}\n{self._approved_sender_hint()}"
+
+    def _approved_sender_hint(self) -> str:
+        if self.config.smtp_from:
+            return (
+                "Важно: чтобы книги доходили до Kindle, добавьте этот адрес в список "
+                f"разрешенных отправителей Amazon: {self.config.smtp_from}"
+            )
+        return (
+            "Важно: чтобы книги доходили до Kindle, адрес SMTP_FROM должен быть добавлен "
+            "в список разрешенных отправителей Amazon."
+        )
 
 
 def build_application(config: Config) -> Application:
